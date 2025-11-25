@@ -3,7 +3,12 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import random
-
+# Add this code near the top of flask_backend.py
+@app.route('/', methods=['GET'])
+def index():
+    # This simple response confirms the server is live and working
+    return "Agri-Tech ML API is running successfully!", 200
+    
 # Initialize the Flask application
 app = Flask(__name__)
 # Enable CORS for the Streamlit app running on a different port
