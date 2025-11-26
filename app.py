@@ -115,11 +115,91 @@ def set_background():
     st.markdown(css, unsafe_allow_html=True)
             
 set_background()
+# Make results appear in white for visibility
+st.markdown("""
+<style>
+/* NPK Metric values */
+div[data-testid="stMetricValue"] {
+    color: #FFFFFF !important;  /* White */
+}
+
+/* Recommended Crop output */
+.recommended-crop-output {
+    color: #FFFFFF !important;  /* White */
+}
+
+/* General text inside semi-card for better contrast if needed */
+.semi-card, .card {
+    color: #FFFFFF !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# Make Recommended Crop and NPK metrics white and larger
+st.markdown("""
+<style>
+/* NPK Metric values */
+div[data-testid="stMetricValue"] {
+    font-size: 2.2rem !important;  /* Larger font size */
+    font-weight: 900 !important;   /* Bold */
+    color: #FFFFFF !important;     /* White */
+}
+
+/* Recommended Crop output label */
+.recommended-crop-output {
+    font-size: 2.0rem !important;  /* Larger font size */
+    font-weight: 900 !important;   /* Bold */
+    color: #FFFFFF !important;     /* White */
+}
+
+/* Label "Recommended Crop Grown:" preceding the crop name */
+div span[style*="font-weight:700"] {
+    color: #FFFFFF !important;     /* White */
+    font-size: 1.6rem !important;  /* Slightly larger */
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------------------
+# CUSTOM STYLING FOR MESSAGES AND METRICS
+# ---------------------------
+st.markdown("""
+<style>
+/* Login/Signup/Reset success or error messages */
+.stAlert {
+    color: #FFFFFF !important;      /* White text for alerts */
+    font-weight: 700 !important;    /* Bold */
+    font-size: 1.2rem !important;   /* Slightly larger */
+}
+
+/* NPK Metric values on Fertilizer page */
+div[data-testid="stMetricValue"] {
+    font-size: 2.4rem !important;   /* Larger font size */
+    font-weight: 900 !important;    /* Bold */
+    color: #FFFFFF !important;      /* White */
+}
+
+/* Recommended Crop output label */
+.recommended-crop-output {
+    font-size: 2.2rem !important;   /* Larger font size */
+    font-weight: 900 !important;    /* Bold */
+    color: #FFFFFF !important;      /* White */
+}
+
+/* Label "Recommended Crop Grown:" preceding the crop name */
+div span[style*="font-weight:700"] {
+    color: #FFFFFF !important;      /* White */
+    font-size: 1.8rem !important;   /* Slightly larger */
+    font-weight: 900 !important;    /* Bold */
+}
+</style>
+""", unsafe_allow_html=True)
 
 # ---------------------------
 # TRANSLATIONS (offline)
 # ---------------------------
 # UI Element Translations
+
 TRANSLATIONS = {
     "en": {
         "Login":"Login","Username":"Username","Password":"Password","Enter username":"Enter username",
@@ -132,7 +212,13 @@ TRANSLATIONS = {
         "Get Fertilizer Recommendation":"Get Fertilizer Recommendation","Menu":"Menu","Logout":"Logout",
         "Invalid username or password":"Invalid username or password","Login successful":"Login successful",
         "Account created. Please login.":"Account created. Please login.","Password reset successful":"Password reset successful",
-        "User does not exist":"User does not exist"
+        "User does not exist":"User does not exist", 
+        "Nitrogen":"Nitrogen","Phosphorus":"Phosphorus","Potassium":"Potassium",
+        "Temperature":"Temperature","Humidity":"Humidity","pH":"pH","Rainfall":"Rainfall","Soil Type":"Soil Type",
+        "N":"N","P":"P","K":"K",
+        "Enter Nitrogen":"Enter Nitrogen","Enter Phosphorus":"Enter Phosphorus","Enter Potassium":"Enter Potassium",
+        "Enter Temperature":"Enter Temperature","Enter Humidity":"Enter Humidity","Enter pH":"Enter pH","Enter Rainfall":"Enter Rainfall",
+        "Welcome to Agri Tech ML Hub":"🌾Welcome to Agri Tech ML Hub"
     },
     "hi": {
         "Login":"लॉगिन","Username":"उपयोगकर्ता नाम","Password":"पासवर्ड","Enter username":"उपयोगकर्ता नाम दर्ज करें",
@@ -145,7 +231,13 @@ TRANSLATIONS = {
         "Get Fertilizer Recommendation":"उर्वरक सुझाव प्राप्त करें","Menu":"मेन्यू","Logout":"लॉगआउट",
         "Invalid username or password":"अमान्य उपयोगकर्ता नाम या पासवर्ड","Login successful":"लॉगिन सफल",
         "Account created. Please login.":"खाता बना लिया गया। कृपया लॉगिन करें।","Password reset successful":"पासवर्ड सफलतापूर्वक रीसेट हुआ",
-        "User does not exist":"उपयोगकर्ता मौजूद नहीं है"
+        "User does not exist":"उपयोगकर्ता मौजूद नहीं है",
+        "Nitrogen":"नाइट्रोजन","Phosphorus":"फॉस्फोरस","Potassium":"पोटाशियम",
+        "Temperature":"तापमान","Humidity":"आर्द्रता","pH":"पीएच","Rainfall":"वर्षा","Soil Type":"मिट्टी का प्रकार",
+        "N":"एन","P":"पी","K":"के",
+        "Enter Nitrogen":"नाइट्रोजन दर्ज करें","Enter Phosphorus":"फॉस्फोरस दर्ज करें","Enter Potassium":"पोटाशियम दर्ज करें",
+        "Enter Temperature":"तापमान दर्ज करें","Enter Humidity":"आर्द्रता दर्ज करें","Enter pH":"पीएच दर्ज करें","Enter Rainfall":"वर्षा दर्ज करें",
+        "Welcome to Agri Tech ML Hub":"🌾 एग्री टेक एमएल हब में आपका स्वागत है"
     },
     "kn": {
         "Login":"ಲಾಗಿನ್","Username":"ಬಳಕೆದಾರ ಹೆಸರು","Password":"ಪಾಸ್ವರ್ಡ್","Enter username":"ಬಳಕೆದಾರರ ಹೆಸರನ್ನು ನಮೂದಿಸಿ",
@@ -158,7 +250,13 @@ TRANSLATIONS = {
         "Get Fertilizer Recommendation":"ರಸಗೊಬ್ಬರ ಶಿಫಾರಸು ಪಡೆಯಿರಿ","Menu":"ಮೆನು","Logout":"ಲಾಗ್ಔಟ್",
         "Invalid username or password":"ಅಮಾನ್ಯ ಬಳಕೆದಾರ ಹೆಸರು ಅಥವಾ ಪಾಸ್ವರ್ಡ್","Login successful":"ಲಾಗಿನ್ ಯಶಸ್ವಿ",
         "Account created. Please login.":"ಖಾತೆ ರಚಿಸಲಾಗಿದೆ. ದಯವಿಟ್ಟು ಲಾಗಿನ್ ಮಾಡಿ.","Password reset successful":"ಪಾಸ್ವರ್ಡ್ ಯಶಸ್ವಿಯಾಗಿ ಮರುಹೊಂದಿಸಲಾಗಿದೆ",
-        "User does not exist":"ಬಳಕೆದಾರರು ಸಿಗಲಿಲ್ಲ"
+        "User does not exist":"ಬಳಕೆದಾರರು ಸಿಗಲಿಲ್ಲ",
+        "Nitrogen":"ನೈಟ್ರೋಜನ್","Phosphorus":"ಫಾಸ್ಫರಸ್","Potassium":"ಪೊಟ್ಯಾಸಿಯಮ್",
+        "Temperature":"ತಾಪಮಾನ","Humidity":"ಆರ್ಡ್ರತೆ","pH":"ಪಿಎಚ್","Rainfall":"ವರ್ಷಾಪಾತ","Soil Type":"ಮಣ್ಣು ಪ್ರಕಾರ",
+        "N":"ಎನ್","P":"ಪಿ","K":"ಕೆ",
+        "Enter Nitrogen":"ನೈಟ್ರೋಜನ್ ನಮೂದಿಸಿ","Enter Phosphorus":"ಫಾಸ್ಫರಸ್ ನಮೂದಿಸಿ","Enter Potassium":"ಪೊಟ್ಯಾಸಿಯಮ್ ನಮೂದಿಸಿ",
+        "Enter Temperature":"ತಾಪಮಾನ ನಮೂದಿಸಿ","Enter Humidity":"ಆರ್ಡ್ರತೆ ನಮೂದಿಸಿ","Enter pH":"ಪಿಎಚ್ ನಮೂದಿಸಿ","Enter Rainfall":"ವರ್ಷಾಪಾತ ನಮೂದಿಸಿ",
+        "Welcome to Agri Tech ML Hub":"🌾 ಅಗ್ರಿ ಟೆಕ್ ಎಂಎಲ್ ಹಬ್‌ಗೆ ಸ್ವಾಗತ"
     }
 }
 
@@ -206,6 +304,7 @@ SOIL_TYPES_TRANSLATIONS = {
     }
 }
 
+#
 def t(key):
     lang = st.session_state.get("lang", "en")
     return TRANSLATIONS.get(lang, TRANSLATIONS["en"]).get(key, key)
@@ -308,8 +407,8 @@ def get_fertilizer_recommendation(crop_name):
 # ---------------------------
 def dashboard_header():
     st.markdown(
-        "<div style='text-align:center; margin-top:20px; margin-bottom:20px;'>"
-        "<h1 style='color:#2E8B57; margin:0;'>🌾 Welcome to Agri Tech ML Hub</h1>"
+        f"<div style='text-align:center; margin-top:20px; margin-bottom:20px;'>"
+        f"<h1 style='color:#FFFFFF; margin:0;'>{t('Welcome to Agri Tech ML Hub')}</h1>"
         "</div>", 
         unsafe_allow_html=True
     )
@@ -411,48 +510,55 @@ def page_reset():
 def page_crop(soils):
     st.markdown("<div class='semi-card'>", unsafe_allow_html=True)
     st.header(t("Crop Recommendation"))
+    
     with st.form("crop_form"):
         c1, c2 = st.columns(2)
+        
         with c1:
-            n = st.number_input("Nitrogen (N)", value=90.0)
-            p = st.number_input("Phosphorus (P)", value=42.0)
-            k = st.number_input("Potassium (K)", value=43.0)
-            # Use format_func to display the translated soil name, but keep the original English name as the internal value
-            soil = st.selectbox("Soil Type", soils, format_func=t_soil)
+            n = st.number_input(f"{t('Nitrogen')} ({t('N')})", value=90.0, help=t("Enter Nitrogen"))
+            p = st.number_input(f"{t('Phosphorus')} ({t('P')})", value=42.0, help=t("Enter Phosphorus"))
+            k = st.number_input(f"{t('Potassium')} ({t('K')})", value=43.0, help=t("Enter Potassium"))
+            soil = st.selectbox(t("Soil Type"), soils, format_func=t_soil)
+
         with c2:
-            temp = st.number_input("Temperature", value=25.0)
-            hum = st.number_input("Humidity", value=75.0)
-            ph = st.number_input("pH", value=6.5)
-            rain = st.number_input("Rainfall", value=150.0)
+            temp = st.number_input(t("Temperature"), value=25.0, help=t("Enter Temperature"))
+            hum = st.number_input(t("Humidity"), value=75.0, help=t("Enter Humidity"))
+            ph_val = st.number_input(t("pH"), value=6.5, help=t("Enter pH"))
+            rain = st.number_input(t("Rainfall"), value=150.0, help=t("Enter Rainfall"))
+        
         submitted = st.form_submit_button(t("Predict Crop"))
+
     if submitted:
-        payload = {"N": n,"P":p,"K":k,"temperature":temp,"humidity":hum,"ph":ph,"rainfall":rain,"soil_type":soil}
+        payload = {"N": n, "P": p, "K": k, "temperature": temp, "humidity": hum, "ph": ph_val, "rainfall": rain, "soil_type": soil}
         crop, err = get_crop_recommendation(payload)
         if crop:
             st.session_state["last_crop"] = str(crop)
-            # Translate the recommended crop name for display
             translated_crop_name = t_crop(str(crop))
             st.success(f"**{t('Recommended Crop Grown')}: {translated_crop_name.upper()}**")
-            st.session_state["page"]="Fertilizer Recommendation"
+            st.session_state["page"] = "Fertilizer Recommendation"
         else:
             st.error(err or "Prediction error")
+    
     st.markdown("</div>", unsafe_allow_html=True)
 
 def page_fertilizer(crops):
     st.markdown("<div class='semi-card'>", unsafe_allow_html=True)
     st.header(t("Fertilizer Recommendation"))
-    # Use format_func to display the translated crop name, but keep the original English name as the internal value
+
+    # Use format_func to display translated crop name
     crop = st.selectbox(t("Select Crop"), crops, format_func=t_crop)
+
     if st.button(t("Get Fertilizer Recommendation")):
         ratio, err = get_fertilizer_recommendation(crop)
         if ratio:
-            # Metrics will be larger due to CSS override
-            c1,c2,c3 = st.columns(3)
-            c1.metric("N", ratio.get("N"))
-            c2.metric("P", ratio.get("P"))
-            c3.metric("K", ratio.get("K"))
+            # Display N,P,K metrics bigger and white
+            c1, c2, c3 = st.columns(3)
+            c1.metric(label=f"{t('N')}", value=f"{ratio.get('N')}", delta=None)
+            c2.metric(label=f"{t('P')}", value=f"{ratio.get('P')}", delta=None)
+            c3.metric(label=f"{t('K')}", value=f"{ratio.get('K')}", delta=None)
         else:
             st.error(err or "No fertilizer data")
+
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------
@@ -475,23 +581,23 @@ def main():
         menu = [t("Crop Recommendation"), t("Fertilizer Recommendation")]
         choice = st.sidebar.selectbox(t("Menu"), menu)
 
-        dashboard_header()  # Dashboard header for logged in pages
+        dashboard_header()  # Dashboard header for logged-in pages
 
         if choice == t("Crop Recommendation"):
             page_crop(soils)
-        else:
-            page_fertilizer(crops)
+            # Show Recommended Crop only on Crop Recommendation page
+            if "last_crop" in st.session_state:
+                translated_last_crop = t_crop(st.session_state['last_crop'])
+                st.markdown(
+                    f"<div style='text-align:center; margin-top:18px;'>"
+                    f"<span style='font-weight:700; font-size:20px; color:white;'>{t('Recommended Crop Grown')}:</span>"
+                    f"<span class='recommended-crop-output' style='color:white; font-size:20px;'>{translated_last_crop.upper()}</span>"
+                    "</div>", unsafe_allow_html=True
+                )
 
-        if "last_crop" in st.session_state:
-            # Translate the last_crop for display
-            translated_last_crop = t_crop(st.session_state['last_crop'])
-            st.markdown(
-                f"<div style='text-align:center; margin-top:18px;'>"
-                f"<span style='font-weight:700;'>{t('Recommended Crop Grown')}:</span>"
-                # Applied custom CSS class for larger font size
-                f"<span class='recommended-crop-output'> {translated_last_crop.upper()}</span>"
-                "</div>", unsafe_allow_html=True
-            )
+        else:
+            page_fertilizer(crops)  # Fertilizer page does NOT show Recommended Crop
+
     else:
         page = st.session_state.get("page", "Login")
         if page == "Login":
@@ -502,6 +608,7 @@ def main():
             page_reset()
         else:
             page_login()
+
 
 if __name__ == "__main__":
     main()
