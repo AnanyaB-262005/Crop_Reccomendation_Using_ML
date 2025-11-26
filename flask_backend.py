@@ -5,183 +5,216 @@ import os
 import joblib
 import numpy as np
 
-# Initialize the Flask application
+# ---------------------------------------------------
+# INITIALIZE FLASK APP
+# ---------------------------------------------------
 app = Flask(__name__)
-# Enable CORS for the Streamlit app running on a different port
 CORS(app)
 
-# ---------------------------
-# GLOBAL DATA/MODEL SETUP
-# ---------------------------
-
-# Define paths to model files
+# ---------------------------------------------------
+# MODEL PATHS
+# ---------------------------------------------------
 MODEL_DIR = os.path.dirname(os.path.abspath(__file__))
 CROP_MODEL_PATH = os.path.join(MODEL_DIR, "crop_model.pkl")
 CROP_ENCODER_PATH = os.path.join(MODEL_DIR, "crop_encoder.pkl")
 MODEL_FEATURES_PATH = os.path.join(MODEL_DIR, "model_features.pkl")
 FERTILIZER_RATIOS_PATH = os.path.join(MODEL_DIR, "fertilizer_ratios.pkl")
 
-# Initialize variables
+# ---------------------------------------------------
+# GLOBAL VARIABLES
+# ---------------------------------------------------
 CROP_MODEL = None
 CROP_ENCODER = None
 MODEL_FEATURES = []
 FERTILIZER_RATIOS = {}
 
+# ---------------------------------------------------
+# LOAD MODELS
+# ---------------------------------------------------
 def load_models():
-    """Load all necessary ML models and data using joblib."""
     global CROP_MODEL, CROP_ENCODER, MODEL_FEATURES, FERTILIZER_RATIOS
+
     try:
-        # Load Crop Recommendation Model (RandomForestClassifier)
         CROP_MODEL = joblib.load(CROP_MODEL_PATH)
         print("Crop Model loaded successfully.")
-        
-        # Load Crop Label Encoder (for decoding predictions)
+
         CROP_ENCODER = joblib.load(CROP_ENCODER_PATH)
         print("Crop Encoder loaded successfully.")
 
-        # Load Model Features (to ensure consistent column order for prediction)
         MODEL_FEATURES = joblib.load(MODEL_FEATURES_PATH)
         print(f"Model Features loaded: {len(MODEL_FEATURES)} features.")
 
-        # Load Fertilizer Ratios (for the lookup table)
         FERTILIZER_RATIOS = joblib.load(FERTILIZER_RATIOS_PATH)
         print("Fertilizer Ratios loaded successfully.")
 
-    except FileNotFoundError as e:
-        print(f"ERROR: Could not find model file: {e}")
     except Exception as e:
-        print(f"ERROR: An error occurred during model loading: {e}")
-        
-# Load models when the application starts
+        print(f"Error loading models: {e}")
+
 load_models()
 
-# ---------------------------
-# API Endpoints
-# ---------------------------
-
-@app.route('/', methods=['GET'])
+# ---------------------------------------------------
+# ROUTES
+# ---------------------------------------------------
+@app.route("/", methods=["GET"])
 def index():
-    # This simple response confirms the server is live and working
-    return "Agri-Tech ML API is running successfully!", 200
+    return "Agri-Tech ML API is running on localhost!", 200
 
-@app.route('/predict', methods=['POST'])
+@app.route("/predict", methods=["POST"])
 def predict_crop():
-    """
-    Endpoint for Crop Recommendation prediction.
-    Inputs: N, P, K, temperature, humidity, ph, rainfall, soil_type
-    Output: recommended_crop
-    """
-    # Check if models are loaded before proceeding
-    if not CROP_MODEL or not CROP_ENCODER or not MODEL_FEATURES:
-        return jsonify({"recommended_crop": None, "error": "ML models are not loaded. Server configuration error."}), 500
+    if not CROP_MODEL:
+        return jsonify({"recommended_crop": None, "error": "Model not loaded"}), 500
 
     try:
         data = request.get_json()
-        
-        # 1. Input Validation and Extraction
-        required_numeric_features = ['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall']
-        soil_key = 'soil_type'
-        
+
+        # Numeric features
+        required_numeric = ["N", "P", "K", "temperature", "humidity", "ph", "rainfall"]
         input_data = {}
-        for feature in required_numeric_features:
-            value = data.get(feature)
-            if value is None:
-                return jsonify({"recommended_crop": None, "error": f"Missing required feature: {feature}"}), 400
-            try:
-                # Convert to float
-                input_data[feature] = float(value)
-            except ValueError:
-                return jsonify({"recommended_crop": None, "error": f"Invalid numeric value for feature: {feature}"}), 400
-        
-        soil_type = data.get(soil_key)
-        if not soil_type:
-            return jsonify({"recommended_crop": None, "error": f"Missing required feature: {soil_key}"}), 400
-        input_data[soil_key] = str(soil_type)
+        for feature in required_numeric:
+            if feature not in data:
+                return jsonify({"error": f"Missing {feature}"}), 400
+            input_data[feature] = float(data[feature])
 
-        
-        # 2. Prepare the Final Feature Vector (Ensure correct order for prediction)
-        
-        # Initialize a dictionary to hold all features in the correct order
-        final_features_dict = {}
-        
-        # Iterate through the model's expected features and populate the dictionary
-        # This handles both numeric and OHE features correctly.
-        
-        # A. Populate numeric features
-        for feature in required_numeric_features:
-            final_features_dict[feature] = input_data[feature]
-            
-        # B. Populate OHE soil type features, setting all to 0 initially
-        ohe_cols = [f for f in MODEL_FEATURES if f.startswith('soil_type_')]
-        for col in ohe_cols:
-            final_features_dict[col] = 0
+        # Soil type as number (instead of one-hot)
+        soil_type = data.get("soil_type")
+        if soil_type is None:
+            return jsonify({"error": "Missing soil_type"}), 400
 
-        # C. Set the corresponding soil type OHE feature to 1
-        ohe_col_name = f'soil_type_{input_data[soil_key]}'
+        # Map soil type string to numeric value
+        soil_mapping = {"Alluvial": 0, "Loamy": 1, "Loamy (Light Soil)": 2, 
+                        "Sandy Loam": 3, "Black Soil (Regur)": 4, "Laterite": 5}
+        soil_num = soil_mapping.get(soil_type)
+        if soil_num is None:
+            return jsonify({"error": f"Soil type '{soil_type}' not recognized"}), 400
 
-        if ohe_col_name in final_features_dict:
-            final_features_dict[ohe_col_name] = 1
+        # Prepare feature vector in correct order (8 features)
+        final_features = np.array([
+            input_data["N"], input_data["P"], input_data["K"],
+            input_data["temperature"], input_data["humidity"], input_data["ph"],
+            input_data["rainfall"], soil_num
+        ]).reshape(1, -1)
+
+        # Prediction
+        pred_encoded = CROP_MODEL.predict(final_features)[0]
+
+        # If your model uses LabelEncoder to encode crop names
+        if CROP_ENCODER:
+            pred_label = CROP_ENCODER.inverse_transform([pred_encoded])[0]
         else:
-            # Handle unrecognized soil types
-            return jsonify({"recommended_crop": None, "error": f"Soil type '{input_data[soil_key]}' is not recognized by the model."}), 400
+            pred_label = str(pred_encoded)
 
-        # D. Create the final feature vector array in the strict order defined by MODEL_FEATURES
-        final_features = np.array([final_features_dict[f] for f in MODEL_FEATURES]).reshape(1, -1)
-        
-        # 3. Make Prediction
-        prediction_encoded = CROP_MODEL.predict(final_features)[0]
-        
-        # 4. Decode Prediction
-        prediction = CROP_ENCODER.inverse_transform([prediction_encoded])[0]
-            
+        return jsonify({"recommended_crop": pred_label, "error": None})
+
+    except Exception as e:
+        print("Prediction Error:", e)
+        return jsonify({"error": str(e)}), 500
+
+
+
+'''@app.route("/predict", methods=["POST"])
+def predict_crop():
+    if not CROP_MODEL or not CROP_ENCODER or not MODEL_FEATURES:
+        return jsonify({"recommended_crop": None, "error": "Model not loaded"}), 500
+
+    try:
+        data = request.get_json()
+
+        required_numeric = ["N", "P", "K", "temperature", "humidity", "ph", "rainfall"]
+
+        # Validate numeric features
+        input_data = {}
+        for feature in required_numeric:
+            if feature not in data:
+                return jsonify({"error": f"Missing {feature}"}), 400
+            input_data[feature] = float(data[feature])
+
+        # Validate soil type
+        soil_type = data.get("soil_type")
+        if not soil_type:
+            return jsonify({"error": "Missing soil_type"}), 400
+
+        # Prepare final feature vector
+        final_dict = {}
+
+        # Add numeric features
+        for f in required_numeric:
+            final_dict[f] = input_data[f]
+
+        # Initialize all one-hot soil features as 0
+        ohe_cols = [col for col in MODEL_FEATURES if col.startswith("soil_type_")]
+        for col in ohe_cols:
+            final_dict[col] = 0
+
+        soil_ohe = f"soil_type_{soil_type}"
+        if soil_ohe not in final_dict:
+            return jsonify({"error": f"Soil type '{soil_type}' not recognized"}), 400
+
+        final_dict[soil_ohe] = 1
+
+        # Create final feature vector in correct order
+        final_features = np.array([final_dict[f] for f in MODEL_FEATURES]).reshape(1, -1)
+
+        # Prediction
+        pred_encoded = CROP_MODEL.predict(final_features)[0]
+        pred_label = CROP_ENCODER.inverse_transform([pred_encoded])[0]
+
+        return jsonify({"recommended_crop": pred_label, "error": None})
+
+    except Exception as e:
+        print("Prediction Error:", e)
+        return jsonify({"error": str(e)}), 500
+
+'''
+@app.route("/fertilizer_recommendation", methods=["POST"])
+def fertilizer_recommendation():
+    try:
+        data = request.get_json()
+        crop = data.get("crop", "").lower()
+
+        if not crop:
+            return jsonify({"error": "Missing crop name"}), 400
+
+        if crop not in FERTILIZER_RATIOS:
+            return jsonify({"error": f"No fertilizer data for crop '{crop}'"}), 404
+
+        ratio = FERTILIZER_RATIOS[crop]
+
         return jsonify({
-            "recommended_crop": prediction,
+            "recommended_ratio": {
+                "N": ratio.get("N"),
+                "P": ratio.get("P"),
+                "K": ratio.get("K")
+            },
             "error": None
         })
 
     except Exception as e:
-        # Catch any unexpected errors during processing
-        print(f"Prediction Error: {e}")
-        return jsonify({"recommended_crop": None, "error": f"An internal error occurred during prediction: {str(e)}"}), 500
+        print("Fertilizer Error:", e)
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/fertilizer_recommendation', methods=['POST'])
-def fertilizer_recommendation():
-    """
-    Endpoint for Fertilizer Recommendation (Lookup/Prediction)
-    Inputs: crop
-    Output: recommended_ratio (N, P, K)
-    """
-    if not FERTILIZER_RATIOS:
-        return jsonify({"recommended_ratio": None, "error": "Fertilizer ratio data is not loaded."}), 500
-
+# ---------------------------
+# TEST MODEL LOADING
+# ---------------------------
+def test_models():
     try:
-        data = request.get_json()
-        crop_name = data.get('crop', '').lower()
-
-        if not crop_name:
-            return jsonify({"error": "Missing 'crop' name"}), 400
-        
-        # --- LOOKUP LOGIC ---
-        ratio = FERTILIZER_RATIOS.get(crop_name)
-        
-        if ratio:
-            # Ensure the ratio keys are returned exactly as expected by the frontend (N, P, K)
-            return jsonify({
-                "recommended_ratio": {
-                    "N": ratio.get("N"),
-                    "P": ratio.get("P"),
-                    "K": ratio.get("K")
-                },
-                "error": None
-            })
-        else:
-            return jsonify({"recommended_ratio": None, "error": f"No fertilizer data found for crop: {crop_name}"}), 404
-
+        crop_model = joblib.load(CROP_MODEL_PATH)
+        crop_encoder = joblib.load(CROP_ENCODER_PATH)
+        model_features = joblib.load(MODEL_FEATURES_PATH)
+        fertilizer_ratios = joblib.load(FERTILIZER_RATIOS_PATH)
+        print("✅ All models loaded successfully!")
+        print(f" - Crop model type: {type(crop_model)}")
+        print(f" - Crop encoder type: {type(crop_encoder)}")
+        print(f" - Number of features: {len(model_features)}")
+        print(f" - Fertilizer ratios loaded for {len(fertilizer_ratios)} crops")
     except Exception as e:
-        print(f"Fertilizer Lookup Error: {e}")
-        return jsonify({"recommended_ratio": None, "error": str(e)}), 500
+        print("❌ Error loading models:", e)
 
-if __name__ == '__main__':
-    # Running locally for debugging
-    print("Starting Flask server...")
-    app.run(host='0.0.0.0', port=5000)
+# ---------------------------------------------------
+# RUN LOCALHOST SERVER
+# ---------------------------------------------------
+
+if __name__ == "__main__":
+    test_models()  # Test if all models load correctly
+    print("Starting Flask server on http://127.0.0.1:5000 ...")
+    app.run(host="127.0.0.1", port=5000, debug=True)
+
